@@ -1,0 +1,26 @@
+logger:
+  level: info
+
+smf:
+  sbi: # 다른 NF들과 통신하는 포트(HTTP를 사용)
+    server:
+      - address: 0.0.0.0
+        port: 7777
+    client:
+      nrf:
+        - uri: http://o5gs-nrf:7777 # nrf에 등록
+  
+  pfcp: # UPF와 통신하는 포트(PFCP 프로토콜 사용) UPF 제어
+    server:
+      - address: 0.0.0.0
+  
+  gtpu:
+    server:
+      - address: 0.0.0.0
+  
+  session: # UE에게 할당할 IP 주소 대역
+    - subnet: 10.45.0.1/16
+  
+  dns: # UE가 사용할 DNS 서버 주소
+    - 8.8.8.8
+    - 8.8.4.4

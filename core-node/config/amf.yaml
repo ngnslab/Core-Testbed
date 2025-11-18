@@ -1,0 +1,61 @@
+logger:
+  level: info
+
+amf:
+  sbi: # 다른 NF들과 통신하는 포트(HTTP를 사용)
+    server:
+      - address: 0.0.0.0
+        port: 7777
+    client:
+      nrf:
+        - uri: http://o5gs-nrf:7777 # nrf에 등록
+  
+  ngap: # gnb와 통신하는 포트(NGAP 프로토콜 사용)
+    server:
+      - address: 0.0.0.0
+        port: 38412 # gNB가 접속하는 포트
+  
+  metrics:
+    server:
+      - address: 0.0.0.0
+        port: 9090
+  
+  amf_name: open5gs-amf0
+  
+  security:
+    integrity_order:
+      - NIA2
+      - NIA1
+      - NIA0
+    ciphering_order:
+      - NEA0
+      - NEA1
+      - NEA2
+  
+  network_name:
+    full: Open5GS
+  
+  time:
+    t3512:
+      value: 540
+  
+  guami:
+    - plmn_id:
+        mcc: "001"
+        mnc: "01"
+      amf_id:
+        region: 2
+        set: 1
+
+  tai:
+    - plmn_id:
+        mcc: "001"
+        mnc: "01"
+      tac: 1
+
+  plmn_support: # 네트워크 식별자
+    - plmn_id:
+        mcc: "001" # Mobile Country Code
+        mnc: "01" # Mobile Network Code
+      s_nssai: # 네트워크 슬라이스 식별자
+        - sst: 1 # Slice/Service Type

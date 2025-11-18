@@ -1,0 +1,69 @@
+# SUPI / IMSI
+supi: "{{SUPI}}"
+mcc: "{{MCC}}"
+mnc: "{{MNC}}"
+
+# SUCI protection (default: disabled)
+protectionScheme: 0
+routingIndicator: "0000"
+
+# Authentication keys
+key: "{{KEY}}"
+op: "{{OP}}"
+opType: "{{OP_TYPE}}"
+amf: "8000"
+
+# UE device identity
+imei: "{{IMEI}}"
+imeiSv: "{{IMEISV}}"
+
+tunNetmask: "255.255.255.0"
+
+# gNB selection
+gnbSearchList:
+  - "{{GNB_NAME}}"
+
+# Access configuration
+uacAic:
+  mps: false
+  mcs: false
+
+uacAcc:
+  normalClass: 0
+  class11: false
+  class12: false
+  class13: false
+  class14: false
+  class15: false
+
+# PDU Sessions
+sessions:
+  - type: "IPv4"
+    apn: "internet"
+    slice:
+      sst: 1
+      sd: 1
+
+# NSSAI configuration
+configured-nssai:
+  - sst: 1
+    sd: 1
+
+default-nssai:
+  - sst: 1
+    sd: 1
+
+# Supported algorithms
+integrity:
+  IA1: true
+  IA2: true
+  IA3: true
+
+ciphering:
+  EA1: true
+  EA2: true
+  EA3: true
+
+integrityMaxRate:
+  uplink: "full"
+  downlink: "full"

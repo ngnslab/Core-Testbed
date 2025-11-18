@@ -1,0 +1,18 @@
+mcc: '001'
+mnc: '01'
+
+nci: "{{NCI}}"
+idLength: 32
+tac: "{{TAC}}"
+
+linkIp: "0.0.0.0"
+ngapIp: "0.0.0.0"
+gtpIp: "0.0.0.0"
+
+amfConfigs: {{AMF_CONFIGS}}
+
+slices:
+  - sst: 1
+    sd: 1
+
+ignoreStreamIds: true

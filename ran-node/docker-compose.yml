@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  gnb:
+    image: ueransim-base
+    container_name: ran-gnb
+    command: ["nr-gnb", "-c", "/config/gnb.yaml"]
+    volumes:
+      - ./configs/gnb.yaml:/config/gnb.yaml
+    networks:
+      - 5gnet
+    privileged: true
+
+  ue:
+    image: ueransim-base
+    container_name: ran-ue
+    command: ["nr-ue", "-c", "/config/ue.yaml"]
+    volumes:
+      - ./configs/ue.yaml:/config/ue.yaml
+    networks:
+      - 5gnet
+    privileged: true
+    depends_on:
+      - gnb
+
+networks:
+  5gnet:
+    external: true
+    name: core-node_5gnet

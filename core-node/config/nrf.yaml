@@ -1,0 +1,8 @@
+logger:
+  level: info
+
+nrf:
+  sbi:
+    server:
+      - address: 0.0.0.0
+        port: 7777 # 다른 NF들이 등록/조회하는 포트

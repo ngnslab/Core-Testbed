@@ -1,0 +1,139 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:4.4
+    container_name: o5gs-mongo
+    command: ["mongod", "--bind_ip_all"]
+    volumes:
+      - ./config/mongodb:/docker-entrypoint-initdb.d
+    networks:
+      - 5gnet
+
+  nrf:
+    build:
+      context: .
+      dockerfile: Dockerfile.nrf
+    container_name: o5gs-nrf
+    volumes:
+      - ./config:/open5gs/config
+    networks:
+      - 5gnet
+    depends_on:
+      - mongo
+
+  scp:
+    build:
+      context: .
+      dockerfile: Dockerfile.scp
+    container_name: o5gs-scp
+    volumes:
+      - ./config:/open5gs/config
+    networks:
+      - 5gnet
+    depends_on:
+      - nrf
+
+  ausf:
+    build:
+      context: .
+      dockerfile: Dockerfile.ausf
+    container_name: o5gs-ausf
+    volumes:
+      - ./config:/open5gs/config
+    networks:
+      - 5gnet
+    depends_on:
+      - nrf
+
+  udm:
+    build:
+      context: .
+      dockerfile: Dockerfile.udm
+    container_name: o5gs-udm
+    volumes:
+      - ./config:/open5gs/config
+    networks:
+      - 5gnet
+    depends_on:
+      - nrf
+
+  udr:
+    build:
+      context: .
+      dockerfile: Dockerfile.udr
+    container_name: o5gs-udr
+    volumes:
+      - ./config:/open5gs/config
+    networks:
+      - 5gnet
+    depends_on:
+      - mongo
+      - nrf
+
+  amf:
+    build:
+      context: .
+      dockerfile: Dockerfile.amf
+    container_name: o5gs-amf
+    volumes:
+      - ./config:/open5gs/config
+    ports:
+      - "38412:38412/sctp"   # NGAP
+    networks:
+      - 5gnet
+    depends_on:
+      - mongo
+      - nrf
+      - scp
+
+  smf:
+    build:
+      context: .
+      dockerfile: Dockerfile.smf
+    container_name: o5gs-smf
+    volumes:
+      - ./config:/open5gs/config
+    networks:
+      - 5gnet
+    depends_on:
+      - mongo
+      - nrf
+      - scp
+      - upf
+
+  upf:
+    build:
+      context: .
+      dockerfile: Dockerfile.upf
+    container_name: o5gs-upf
+    volumes:
+      - ./config:/open5gs/config
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      - 5gnet
+    depends_on:
+      - mongo
+
+  webui:
+    build:
+      context: .
+      dockerfile: Dockerfile.webui
+    container_name: o5gs-webui
+    volumes:
+      - ./config:/open5gs/config
+    ports:
+      - "0.0.0.0:9999:3000"
+    networks:
+      - 5gnet
+    depends_on:
+      - mongo
+
+networks:
+  5gnet:
+    driver: bridge

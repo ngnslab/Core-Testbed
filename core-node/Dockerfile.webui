@@ -1,0 +1,17 @@
+FROM node:18-bullseye
+
+RUN apt update && apt install -y git && apt clean
+
+# clone whole open5gs repo including webui
+RUN git clone https://github.com/open5gs/open5gs.git /open5gs
+
+WORKDIR /open5gs/webui
+
+RUN npm install
+RUN npm run build
+
+ENV DB_URI=mongodb://o5gs-mongo/open5gs
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
+
+CMD ["npm", "start"]

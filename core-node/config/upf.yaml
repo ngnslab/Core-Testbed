@@ -1,0 +1,19 @@
+logger:
+  level: info
+
+upf:
+  pfcp:
+    server:
+      - address: 0.0.0.0
+  
+  gtpu:
+    server:
+      - address: 0.0.0.0
+        port: 2152
+
+  session:
+    - subnet: 10.45.0.0/16
+    - subnet: 2001:db8:cafe::/48
+
+session:
+  offload: false
