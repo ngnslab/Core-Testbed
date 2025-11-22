@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>RAN UI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: Arial, sans-serif; margin: 2rem; background: #0b111d; color: #e6edf3; }
+      h1 { margin-bottom: 0.5rem; }
+      section { margin-top: 2rem; padding: 1rem; border: 1px solid #1f2937; border-radius: 8px; background: #111827; }
+      label { display: block; margin-top: 0.5rem; }
+      input { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border-radius: 4px; border: 1px solid #374151; background: #1f2937; color: #e5e7eb; }
+      button { margin-top: 1rem; padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #2563eb; color: white; cursor: pointer; }
+      table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+      th, td { border: 1px solid #1f2937; padding: 0.5rem; text-align: left; }
+      .status { text-transform: capitalize; }
+      .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+      .ue-card { border: 1px solid #1f2937; border-radius: 8px; padding: 1rem; background: #0f1624; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+      .ue-card h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+      .ue-card .meta { font-size: 0.9rem; color: #9ca3af; }
+      .ue-card .status-pill { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.8rem; margin-top: 0.5rem; }
+      .status-running { background: rgba(16,185,129,0.2); color: #10b981; }
+      .status-missing { background: rgba(239,68,68,0.2); color: #ef4444; }
+      .status-exited { background: rgba(245,158,11,0.2); color: #f59e0b; }
+    </style>
+  </head>
+  <body>
+    <h1>RAN Control Panel (alpha)</h1>
+    <p>This placeholder UI hits /api endpoints served by ran-ui. Hook it into Docker and MongoDB next.</p>
+
+    <section>
+      <h2>Existing UEs</h2>
+      <table id="ue-table">
+        <thead>
+          <tr><th>IMSI</th><th>Container</th><th>gNB</th><th>Actions</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>UE Container Dashboard</h2>
+      <p>Current UERANSIM UE containers detected in Docker.</p>
+      <div id="ue-card-grid" class="card-grid"></div>
+    </section>
+
+    <section>
+      <h2>Create UE</h2>
+      <form id="ue-form">
+        <label>IMSI<input name="imsi" required /></label>
+        <label>Key<input name="key" required /></label>
+        <label>OPC<input name="opc" required /></label>
+        <label>gNB Name<input name="gnbName" required value="RAN-GNB" /></label>
+        <button type="submit">Schedule UE</button>
+      </form>
+      <div id="form-status"></div>
+    </section>
+
+    <script>
+      async function fetchUes() {
+        const res = await fetch('/api/ue');
+        const data = await res.json();
+        const tbody = document.querySelector('#ue-table tbody');
+        tbody.innerHTML = '';
+        const cardGrid = document.querySelector('#ue-card-grid');
+        cardGrid.innerHTML = '';
+        data.items.forEach((ue) => {
+          const row = document.createElement('tr');
+          const actionButton = ue.hasContainer
+            ? `<span class="status">${ue.containerStatus}</span>`
+            : `<button data-id="${ue.id}" class="spawn-btn">Create UE</button>`;
+          row.innerHTML = `
+            <td>${ue.id}</td>
+            <td class="status">${ue.containerStatus || 'missing'}</td>
+            <td>${ue.gnbName || ''}</td>
+            <td>${actionButton}</td>
+          `;
+          tbody.appendChild(row);
+
+          if (ue.hasContainer) {
+            const statusClass = (ue.containerStatus || 'missing').toLowerCase();
+            const card = document.createElement('div');
+            card.className = 'ue-card';
+            card.innerHTML = `
+              <h3>${ue.id}</h3>
+              <div class="meta">Container: <code>${ue.containerId || '-'}</code></div>
+              <div class="meta">gNB: ${ue.gnbName || '-'}</div>
+              <div class="status-pill status-${statusClass}">
+                ${ue.containerStatus}
+              </div>
+            `;
+            cardGrid.appendChild(card);
+          }
+        });
+      }
+
+      document.addEventListener('click', async (event) => {
+        if (event.target.classList.contains('spawn-btn')) {
+          const id = event.target.dataset.id;
+          const res = await fetch(`/api/ue/${id}/spawn`, { method: 'POST' });
+          if (!res.ok) {
+            const err = await res.json();
+            alert(err.error || 'Failed to spawn UE');
+          }
+          fetchUes();
+        }
+      });
+
+      document.getElementById('ue-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const formData = Object.fromEntries(new FormData(form).entries());
+        const res = await fetch('/api/ue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+        const status = document.getElementById('form-status');
+        if (res.ok) {
+          status.textContent = 'UE creation submitted';
+          form.reset();
+          fetchUes();
+        } else {
+          const err = await res.json();
+          status.textContent = err.error || 'Failed to submit';
+        }
+      });
+
+      fetchUes();
+      setInterval(fetchUes, 5000);
+    </script>
+  </body>
+</html>

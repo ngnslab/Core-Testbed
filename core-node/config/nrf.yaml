@@ -2,6 +2,10 @@ logger:
   level: info
 
 nrf:
+  serving:
+    - plmn_id:
+        mcc: "001"
+        mnc: "01"
   sbi:
     server:
       - address: 0.0.0.0

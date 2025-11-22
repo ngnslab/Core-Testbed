@@ -1,0 +1,45 @@
+# DB 주소 수정 (localhost -> o5gs-mongo)
+db_uri: mongodb://o5gs-mongo/open5gs
+
+logger:
+  level: debug
+
+pcf:
+  sbi:
+    server:
+      - address: 0.0.0.0   # 컨테이너 내부의 모든 IP에서 수신 (필수!)
+        port: 7777
+    client:
+      # nrf:
+      #   - uri: http://o5gs-nrf:7777  # Docker 네트워크상의 NRF 주소
+      scp:
+        - uri: http://o5gs-scp:7777  # Docker 네트워크상의 SCP 주소
+
+  metrics:
+    server:
+      - address: 0.0.0.0
+        port: 9090
+
+
+# (선택사항) 필요한 경우 아래 정책 설정의 주석을 풀어 사용하세요.
+# 기본적으로 주석 처리되어 있으면 모든 요청을 허용하거나 기본 정책을 따릅니다.
+
+# policy:
+#   - slice:
+#       - sst: 1
+#         sd: 1
+#         default_indicator: true
+#         session:
+#           - name: internet
+#             type: 3
+#             ambr:
+#               downlink:
+#                 value: 1
+#                 unit: 3
+#               uplink:
+#                 value: 1
+#                 unit: 3
+#             qos:
+#               index: 9
+#               arp:
+#                 priority_level: 8

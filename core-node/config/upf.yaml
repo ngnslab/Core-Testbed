@@ -5,15 +5,14 @@ upf:
   pfcp:
     server:
       - address: 0.0.0.0
-  
+        advertise: o5gs-upf  # <--- 이 부분이 중요합니다! (자신의 위치를 알림)
+
   gtpu:
     server:
       - address: 0.0.0.0
-        port: 2152
+        advertise: o5gs-upf  # <--- GTP 터널용 주소도 명시
 
   session:
     - subnet: 10.45.0.0/16
-    - subnet: 2001:db8:cafe::/48
-
-session:
-  offload: false
+      gateway: 10.45.0.1
+      dnn: internet

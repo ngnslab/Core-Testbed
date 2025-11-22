@@ -9,6 +9,11 @@ services:
       - ./config/mongodb:/docker-entrypoint-initdb.d
     networks:
       - 5gnet
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   nrf:
     build:
@@ -20,7 +25,8 @@ services:
     networks:
       - 5gnet
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
 
   scp:
     build:
@@ -39,6 +45,8 @@ services:
       context: .
       dockerfile: Dockerfile.ausf
     container_name: o5gs-ausf
+    environment:
+      - OGS_SBI_IFACE=o5gs-ausf
     volumes:
       - ./config:/open5gs/config
     networks:
@@ -68,9 +76,26 @@ services:
     networks:
       - 5gnet
     depends_on:
-      - mongo
-      - nrf
-
+      mongo:
+        condition: service_healthy
+      nrf:
+        condition: service_started
+  pcf:
+      build:
+        context: .
+        dockerfile: Dockerfile.pcf
+      container_name: o5gs-pcf
+      volumes:
+        - ./config:/open5gs/config
+      networks:
+        - 5gnet
+      depends_on:
+        mongo:
+          condition: service_healthy
+        nrf:
+          condition: service_started
+        scp:
+          condition: service_started 
   amf:
     build:
       context: .
@@ -83,9 +108,14 @@ services:
     networks:
       - 5gnet
     depends_on:
-      - mongo
-      - nrf
-      - scp
+      mongo:
+        condition: service_healthy
+      nrf:
+        condition: service_started
+      scp:
+        condition: service_started
+      pcf:
+        condition: service_started
 
   smf:
     build:
@@ -97,10 +127,14 @@ services:
     networks:
       - 5gnet
     depends_on:
-      - mongo
-      - nrf
-      - scp
-      - upf
+      mongo:
+        condition: service_healthy
+      nrf:
+        condition: service_started
+      scp:
+        condition: service_started
+      upf:
+        condition: service_started
 
   upf:
     build:
@@ -118,7 +152,9 @@ services:
     networks:
       - 5gnet
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy  
+
 
   webui:
     build:
@@ -127,12 +163,15 @@ services:
     container_name: o5gs-webui
     volumes:
       - ./config:/open5gs/config
+      
     ports:
       - "0.0.0.0:9999:3000"
     networks:
       - 5gnet
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
+    
 
 networks:
   5gnet:

@@ -23,6 +23,28 @@ services:
     depends_on:
       - gnb
 
+  ran-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ran-ui
+    container_name: ran-ui
+    volumes:
+      - ./configs:/configs
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "0.0.0.0:7777:7777"
+    networks:
+      - 5gnet
+    environment:
+      - PORT=7777
+      - MONGO_URI=mongodb://o5gs-mongo/open5gs
+      - CONFIG_HOST_DIR=/root/5G-lab/ran-node/configs
+      - CONFIG_MOUNT_DIR=/configs
+      - RAN_NETWORK=core-node_5gnet
+      - UERANSIM_IMAGE=ueransim-base
+      # - MONGO_URI=mongodb://o5gs-mongo/open5gs # core-node의 mongo와 연결
+
+
 networks:
   5gnet:
     external: true

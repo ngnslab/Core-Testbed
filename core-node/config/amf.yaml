@@ -1,5 +1,5 @@
 logger:
-  level: info
+  level: debug
 
 amf:
   sbi: # 다른 NF들과 통신하는 포트(HTTP를 사용)
@@ -7,8 +7,8 @@ amf:
       - address: 0.0.0.0
         port: 7777
     client:
-      nrf:
-        - uri: http://o5gs-nrf:7777 # nrf에 등록
+      scp:
+        - uri: http://o5gs-scp:7777
   
   ngap: # gnb와 통신하는 포트(NGAP 프로토콜 사용)
     server:
@@ -59,3 +59,4 @@ amf:
         mnc: "01" # Mobile Network Code
       s_nssai: # 네트워크 슬라이스 식별자
         - sst: 1 # Slice/Service Type
+          sd: 1 # Slice Differentiator
