@@ -14,8 +14,8 @@ docker compose up -d gnb
 echo "[+] Waiting for gNB to initialize..."
 sleep 5
 
-echo "[+] Starting UE..."
-docker compose up -d ue
+# echo "[+] Starting UE..."
+# docker compose up -d ue
 
 echo "[+] Starting ran-ui..."
 docker compose up -d ran-ui

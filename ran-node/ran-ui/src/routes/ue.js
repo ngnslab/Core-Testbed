@@ -247,6 +247,118 @@ export default function createUeRouter(
     }
   });
 
+  router.post("/batch/spawn", async (req, res, next) => {
+    console.log("Batch spawning UE containers...");
+    try {
+      // 요청 본문에서 IMSI 리스트를 가져옴
+      const { imsiList } = req.body || {};
+      console.log(`Batch spawning UE containers for IMSIs: ${imsiList}`);
+      if (!Array.isArray(imsiList) || imsiList.length === 0) {
+        // IMSI 리스트가 없거나 비어있으면 에러 반환
+        return res.status(400).json({ error: "imsiList is required and must be a non-empty array" });
+      }
+
+      const failed = []; // 실패한 UE 정보를 저장할 배열
+      const successes = []; // 성공적으로 생성된 UE 정보를 저장할 배열
+
+      for (const imsi of imsiList) {
+        try {
+          // MongoDB에서 IMSI에 해당하는 UE 정보를 조회
+          console.log(`Processing IMSI ${imsi}...`);
+          const doc = await subscriberCollection.findOne({ imsi });
+          if (!doc) {
+            // UE 정보가 없으면 실패 목록에 추가
+            failed.push({ imsi, error: `흑흑 UE not found in database` });
+            continue;
+          }
+
+          const containerName = `ran-ue-${imsi}`; // 컨테이너 이름 생성
+          try {
+            // 이미 존재하는 컨테이너인지 확인
+            const existing = docker.getContainer(containerName);
+            await existing.inspect();
+            // 이미 존재하면 실패 목록에 추가
+            failed.push({ imsi, error: "UE container already exists" });
+            continue;
+          } catch (err) {
+            // 컨테이너가 존재하지 않는 경우에만 진행
+            if (err.statusCode && err.statusCode !== 404) {
+              throw err;
+            }
+          }
+
+          // UE 보안 자격 증명이 있는지 확인
+          if (!doc.security?.k || !(doc.security?.opc || doc.security?.op)) {
+            failed.push({ imsi, error: "UE security credentials missing in MongoDB" });
+            continue;
+          }
+
+          // 호스트 및 마운트 디렉토리 설정 확인
+          if (!config?.hostDir || !config?.mountDir) {
+            failed.push({ imsi, error: "Configuration directories not defined" });
+            continue;
+          }
+
+          // UE 구성 파일 생성
+          const { fileName, containerPath } = await writeUeConfig(
+            doc,
+            doc.gnbName || "RAN-GNB",
+            config.mountDir
+          );
+          const hostPath = path.join(config.hostDir, "generated", fileName);
+
+          // 컨테이너 바인딩 설정
+          const binds = [`${hostPath}:/config/${fileName}:ro`];
+          const createOptions = {
+            name: containerName,
+            Image: image,
+            Cmd: ["nr-ue", "-c", `/config/${fileName}`],
+            Labels: {
+              "ran-ui": "ue",
+              "ran-ui.imsi": imsi,
+            },
+            HostConfig: {
+              Binds: binds,
+              Privileged: true,
+            },
+            NetworkingConfig: {
+              EndpointsConfig: {
+                [network]: {},
+              },
+            },
+          };
+
+          // Docker 컨테이너 생성 및 시작
+          const container = await docker.createContainer(createOptions);
+          await container.start();
+
+          // MongoDB에 컨테이너 상태 업데이트
+          await subscriberCollection.updateOne(
+            { imsi },
+            {
+              $set: {
+                status: "running",
+                containerId: container.id,
+                configPath: containerPath,
+              },
+            }
+          );
+
+          // 성공 목록에 추가
+          successes.push({ imsi, containerId: container.id });
+        } catch (err) {
+          // 처리 중 에러 발생 시 실패 목록에 추가
+          failed.push({ imsi, error: err.message });
+        }
+      }
+
+      // 결과 반환: 성공 및 실패 목록
+      res.status(207).json({ successes, failed });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   router.delete("/:id", async (req, res, next) => {
     try {
       const result = await subscriberCollection.deleteOne({ imsi: req.params.id });
@@ -260,4 +372,4 @@ export default function createUeRouter(
   });
 
   return router;
-} 
+}
