@@ -159,94 +159,6 @@ export default function createUeRouter(
     }
   });
 
-  router.post("/:id/spawn", async (req, res, next) => {
-    try {
-      const imsi = req.params.id;
-      const doc = await subscriberCollection.findOne({ imsi });
-      if (!doc) {
-        return res.status(404).json({ error: "UE not found in database" });
-      }
-      console.log(`Spawning UE container for IMSI ${imsi}...`);
-
-      const containerName = `ran-ue-${imsi}`;
-      try {
-        const existing = docker.getContainer(containerName);
-        await existing.inspect();
-        return res
-          .status(409)
-          .json({ error: "UE container already exists", containerName });
-      } catch (err) {
-        if (err.statusCode && err.statusCode !== 404) {
-          throw err;
-        }
-      }
-      console.log(`No existing container found for IMSI ${imsi}, proceeding to spawn.`);
-      
-      // 검증: 보안 자격 증명 및 구성 디렉토리 존재 여부 확인
-      if (!doc.security?.k || !(doc.security?.opc || doc.security?.op)) {
-        return res
-          .status(400)
-          .json({ error: "UE security credentials missing in MongoDB" });
-      }
-      // 검증: 호스트 및 마운트 디렉토리 설정 확인
-      if (!config?.hostDir || !config?.mountDir) {
-        return res
-          .status(500)
-          .json({ error: "Configuration directories not defined" });
-      }
-      console.log(`Configuration directories verified for IMSI ${imsi}.`);
-      console.log(`Writing UE configuration for IMSI ${imsi}...`);
-      const { fileName, containerPath } = await writeUeConfig(
-        doc,
-        doc.gnbName || "RAN-GNB",
-        config.mountDir
-      );
-      const hostPath = path.join(config.hostDir, "generated", fileName);
-
-      const binds = [`${hostPath}:/config/${fileName}:ro`];
-      const createOptions = {
-        name: containerName,
-        Image: image,
-        Cmd: ["nr-ue", "-c", `/config/${fileName}`],
-        Labels: {
-          "ran-ui": "ue",
-          "ran-ui.imsi": imsi,
-        },
-        HostConfig: {
-          Binds: binds,
-          Privileged: true,
-        },
-        NetworkingConfig: {
-          EndpointsConfig: {
-            [network]: {},
-          },
-        },
-      };
-
-      const container = await docker.createContainer(createOptions);
-      await container.start();
-
-      await subscriberCollection.updateOne(
-        { imsi },
-        {
-          $set: {
-            status: "running",
-            containerId: container.id,
-            configPath: containerPath,
-          },
-        }
-      );
-
-      res.status(201).json({
-        message: "UE container started",
-        containerId: container.id,
-        containerName,
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
-
   router.post("/batch/spawn", async (req, res, next) => {
     console.log("Batch spawning UE containers...");
     try {
@@ -354,6 +266,94 @@ export default function createUeRouter(
 
       // 결과 반환: 성공 및 실패 목록
       res.status(207).json({ successes, failed });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/:id/spawn", async (req, res, next) => {
+    try {
+      const imsi = req.params.id;
+      const doc = await subscriberCollection.findOne({ imsi });
+      if (!doc) {
+        return res.status(404).json({ error: "UE not found in database" });
+      }
+      console.log(`Spawning UE container for IMSI ${imsi}...`);
+
+      const containerName = `ran-ue-${imsi}`;
+      try {
+        const existing = docker.getContainer(containerName);
+        await existing.inspect();
+        return res
+          .status(409)
+          .json({ error: "UE container already exists", containerName });
+      } catch (err) {
+        if (err.statusCode && err.statusCode !== 404) {
+          throw err;
+        }
+      }
+      console.log(`No existing container found for IMSI ${imsi}, proceeding to spawn.`);
+      
+      // 검증: 보안 자격 증명 및 구성 디렉토리 존재 여부 확인
+      if (!doc.security?.k || !(doc.security?.opc || doc.security?.op)) {
+        return res
+          .status(400)
+          .json({ error: "UE security credentials missing in MongoDB" });
+      }
+      // 검증: 호스트 및 마운트 디렉토리 설정 확인
+      if (!config?.hostDir || !config?.mountDir) {
+        return res
+          .status(500)
+          .json({ error: "Configuration directories not defined" });
+      }
+      console.log(`Configuration directories verified for IMSI ${imsi}.`);
+      console.log(`Writing UE configuration for IMSI ${imsi}...`);
+      const { fileName, containerPath } = await writeUeConfig(
+        doc,
+        doc.gnbName || "RAN-GNB",
+        config.mountDir
+      );
+      const hostPath = path.join(config.hostDir, "generated", fileName);
+
+      const binds = [`${hostPath}:/config/${fileName}:ro`];
+      const createOptions = {
+        name: containerName,
+        Image: image,
+        Cmd: ["nr-ue", "-c", `/config/${fileName}`],
+        Labels: {
+          "ran-ui": "ue",
+          "ran-ui.imsi": imsi,
+        },
+        HostConfig: {
+          Binds: binds,
+          Privileged: true,
+        },
+        NetworkingConfig: {
+          EndpointsConfig: {
+            [network]: {},
+          },
+        },
+      };
+
+      const container = await docker.createContainer(createOptions);
+      await container.start();
+
+      await subscriberCollection.updateOne(
+        { imsi },
+        {
+          $set: {
+            status: "running",
+            containerId: container.id,
+            configPath: containerPath,
+          },
+        }
+      );
+
+      res.status(201).json({
+        message: "UE container started",
+        containerId: container.id,
+        containerName,
+      });
     } catch (err) {
       next(err);
     }
