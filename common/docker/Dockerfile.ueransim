@@ -5,7 +5,7 @@ FROM --platform=linux/amd64 ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    git make gcc g++ cmake libsctp-dev lksctp-tools iproute2 net-tools \
+    git make gcc g++ cmake libsctp-dev lksctp-tools iproute2 net-tools iputils-ping\
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -14,6 +14,13 @@ WORKDIR /app
 WORKDIR /ueransim
 RUN git clone https://github.com/aligungr/UERANSIM.git .
 RUN make
+
+
+# --- UERANSIM 소스를 수정한 경우 ---
+# 아래 주석을 해제하고, 수정된 UERANSIM 소스를 Docker 빌드 컨텍스트에 복사
+# COPY ./modified-ueransim /ueransim
+# WORKDIR /ueransim
+# RUN make
 
 # 런타임 환경
 WORKDIR /root

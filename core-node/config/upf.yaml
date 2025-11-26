@@ -13,6 +13,9 @@ upf:
         advertise: o5gs-upf  # <--- GTP 터널용 주소도 명시
 
   session:
-    - subnet: 10.45.0.0/16
+    - subnet: 10.45.0.0/16 # UPF가 이걸 보고 ogstun0 인터페이스 생성한다고 함.
       gateway: 10.45.0.1
       dnn: internet
+      
+    - subnet: 2001:db8:cafe::/48
+      gateway: 2001:db8:cafe::1 # <--- [추가] IPv6 Gateway IP

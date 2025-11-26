@@ -141,10 +141,11 @@ services:
       context: .
       dockerfile: Dockerfile.upf
     container_name: o5gs-upf
+    privileged: true
     volumes:
       - ./config:/open5gs/config
-    cap_add:
-      - NET_ADMIN
+    # cap_add:
+    #   - NET_ADMIN
     devices:
       - /dev/net/tun
     sysctls:
@@ -176,3 +177,8 @@ services:
 networks:
   5gnet:
     driver: bridge
+    name: core-node_5gnet
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          gateway: 172.18.0.1

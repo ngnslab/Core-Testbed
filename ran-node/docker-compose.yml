@@ -10,8 +10,10 @@ services:
     volumes:
       - ./configs/gnb.yaml:/config/gnb.yaml
     networks:
-      - 5gnet
-      - rannet
+      5gnet:
+        ipv4_address: 172.18.0.20
+      rannet:
+        ipv4_address: 172.20.0.20
     privileged: true
 
   ue:
@@ -46,10 +48,12 @@ services:
       - PORT=7777
       - MONGO_URI=mongodb://o5gs-mongo/open5gs
       # CONFIG_HOST_DIR : PC 마다 다르게 설정
-      - CONFIG_HOST_DIR=/home/givensik/Core-Testbed/ran-node/configs 
+      # - CONFIG_HOST_DIR=/home/givensik/Core-Testbed/ran-node/configs 
+      - CONFIG_HOST_DIR=/root/5G-lab/ran-node/configs
       - CONFIG_MOUNT_DIR=/configs
-      - RAN_NETWORK=core-node_5gnet
-      - UERANSIM_IMAGE=ueransim-base
+      # - RAN_NETWORK=core-node_5gnet
+      - RAN_NETWORK=ran-node_rannet
+      - UERANSIM_IMAGE=ran-node-ue
 
 
 networks:
@@ -58,3 +62,8 @@ networks:
     name: core-node_5gnet
   rannet:
     driver: bridge
+    name: ran-node_rannet
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1

@@ -27,13 +27,19 @@ RUN apt-get update && \
         libnghttp2-dev \
         libtins-dev \
         libtalloc-dev \
-        meson && \
+        meson \
+        iproute2 \
+        iptables \
+        net-tools \
+        iputils-ping && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/open5gs/open5gs.git /open5gs
 
 WORKDIR /open5gs
-RUN meson build --prefix=/usr && ninja -C build
+RUN meson build --prefix=/usr && ninja -C build && ninja -C build install
 
-CMD ["./build/src/upf/open5gs-upfd", "-c", "/open5gs/config/upf.yaml"]
+# CMD ["./build/src/upf/open5gs-upfd", "-c", "/open5gs/config/upf.yaml"]
+# CMD ["open5gs-upfd", "-c", "/open5gs/config/upf.yaml"]
+CMD ["/open5gs/config/upf_run.sh"]

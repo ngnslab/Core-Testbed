@@ -3,5 +3,5 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y python3-pip python3-setuptools python3-wheel ninja-build build-essential flex bison git cmake libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libidn11-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev libmicrohttpd-dev libcurl4-gnutls-dev libtins-dev libtalloc-dev meson && apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN git clone https://github.com/open5gs/open5gs.git /open5gs
 WORKDIR /open5gs
-RUN meson build --prefix=/usr && ninja -C build
+RUN meson build --prefix=/usr && ninja -C build && ninja -C build install
 CMD ["./build/src/udr/open5gs-udrd", "-c", "/open5gs/config/udr.yaml"]

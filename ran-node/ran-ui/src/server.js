@@ -26,10 +26,12 @@ const subscribers = db.collection("subscribers");
 // 도커 관련 설정은 환경 변수로 치환 가능하도록 묶어둔다
 const dockerSocket = process.env.DOCKER_SOCKET || "/var/run/docker.sock";
 const docker = new Docker({ socketPath: dockerSocket });
+
 const configMountDir = process.env.CONFIG_MOUNT_DIR || "/configs";
 const configHostDir = process.env.CONFIG_HOST_DIR || configMountDir;
-const ranNetwork = process.env.RAN_NETWORK || "core-node_5gnet";
-const ueImage = process.env.UERANSIM_IMAGE || "ueransim-base";
+const ranNetwork = process.env.RAN_NETWORK || "ran-node_rannet";
+// const ueImage = process.env.UERANSIM_IMAGE || "ueransim-base";
+const ueImage = process.env.UERANSIM_IMAGE || "ran-node-ue";
 const reapIntervalMs = Number(process.env.REAP_INTERVAL_MS || 15000);
 
 // 헬스체크 엔드포인트

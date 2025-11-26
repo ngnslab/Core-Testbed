@@ -14,6 +14,8 @@ smf:
   pfcp: # UPF와 통신하는 포트(PFCP 프로토콜 사용) UPF 제어
     server:
       - address: 0.0.0.0
+        advertise: o5gs-smf
+        
     client:
       upf:
         - address: o5gs-upf
