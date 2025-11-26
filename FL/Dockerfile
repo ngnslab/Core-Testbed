@@ -14,4 +14,4 @@ COPY shared ./shared
 
 ENV PYTHONPATH=/app
 
-CMD ["python", "client/fl_client.py"]
+# CMD ["python", "client/fl_client.py"]
